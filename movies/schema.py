@@ -59,12 +59,11 @@ class CreateActor(graphene.Mutation):
     class Arguments():
         input = ActorInput(required=True)
 
-    # Define Payloads: ok and actor
-    ok = graphene.Boolean
+    # Payloads
+    ok = graphene.Boolean()
     actor = graphene.Field(ActorType)
 
     # Control the execution
-    @staticmethod
     def mutate(root, info, input=None):
         ok = True
         actor_instance = Actor(name=input.name)
@@ -82,7 +81,6 @@ class UpdateActor(graphene.Mutation):
     actor = graphene.Field(ActorType)
 
     # Control the execution
-    @staticmethod
     def mutate(root, info, id, input=None):
         ok = False
         actor_instance = Actor.objects.get(pk=id)
@@ -103,7 +101,7 @@ class CreateMovie(graphene.Mutation):
     ok = graphene.Boolean()
     movie = graphene.Field(MovieType)
 
-    @staticmethod
+    # Control the execution
     def mutate(root, info, input=None):
         ok = True
         actors = []
@@ -126,10 +124,11 @@ class UpdateMovie(graphene.Mutation):
         id = graphene.Int(required=True)
         input = MovieInput(required=True)
 
+    # Payloads
     ok = graphene.Boolean()
     movie = graphene.Field(MovieType)
 
-    @staticmethod
+    # Control the execution
     def mutate(root, info, id, input=None):
         ok = False
         movie_instance = Movie.objects.get(pk=id)
