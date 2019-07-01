@@ -1,2 +1,6 @@
+# IDE
+.vscode
+
+# Django stuffs
 __pycache__
 db.sqlite3
