@@ -1,5 +1,6 @@
 import graphene
 from graphene import relay
+from graphql_relay import from_global_id
 from graphene_django.types import DjangoObjectType, ObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from movies.models import Actor, Movie
@@ -169,11 +170,87 @@ class UpdateMovie(graphene.Mutation):
             return UpdateMovie(ok=ok, movie=movie_instance)
         return UpdateMovie(ok=ok, movie=None)
 
+
+#########################################################################
+# Define the Relay Mutations
+#########################################################################
+class RelayCreateActor(relay.ClientIDMutation):
+    class Input:
+        name = graphene.String(required=True)
+
+    ok = graphene.Boolean()
+    actor = graphene.Field(ActorType)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        print('inputs: ', input)
+        name = input.get('name')
+        ok = True
+        actor_instance = Actor(name=name)
+        actor_instance.save()
+        return CreateActor(ok=ok, actor=actor_instance)
+
+class RelayUpdateActor(relay.ClientIDMutation):
+    class Input:
+        id = graphene.ID(required=True)
+        name = graphene.String(required=True)
+
+    ok = graphene.Boolean()
+    actor = graphene.Field(ActorType)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        id = input.get('id', None)
+        name = input.get('name', None)
+
+        if not id:
+            return UpdateActor(ok=False, actor=None)
+
+        ok = True
+        actor_instance = Actor.objects.get(pk=id)
+        actor_instance.name = name
+        actor_instance.save()
+        return CreateActor(ok=ok, actor=actor_instance)
+
+class RelayCreateMovie(relay.ClientIDMutation):
+    class Input:
+        title = graphene.String(required=True)
+        year = graphene.Int(required=True)
+        actors = graphene.List(ActorInput)
+
+    ok = graphene.Boolean()
+    movie = graphene.Field(MovieType)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        title = input.get('title')
+        year = input.get('year')
+        actors_input = input.get('actors', [])
+        input_ids = []
+
+        for actor_input in actors_input:
+            if not actor_input:
+                return RelayCreateMovie(ok=False, movie=None)
+            input_ids.append(actor_input.get('id'))
+
+        movie_instance = Movie(
+            title=title,
+            year=year,
+        )
+        movie_instance.save()
+        actors = Actor.objects.filter(pk__in=input_ids)
+        movie_instance.actors.set(actors)
+        return RelayCreateMovie(ok=True, movie=movie_instance)
+
 class Mutation(graphene.ObjectType):
     create_actor = CreateActor.Field()
     update_actor = UpdateActor.Field()
     create_movie = CreateMovie.Field()
     update_movie = UpdateMovie.Field()
+    relay_create_actor = RelayCreateActor.Field()
+    relay_update_actor = RelayUpdateActor.Field()
+    relay_create_movie = RelayCreateMovie.Field()
+    # relay_update_movie = RelayUpdateMovie.Field()
 
 #########################################################################
 # Define Schema, include in: Query & Mutation
