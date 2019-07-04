@@ -156,3 +156,22 @@ mutation relayUpdateMovie {
     }
   }
 }
+
+# For token generate, verify and refresh token if expired
+mutation getToken {
+  tokenAuth(username: "vinhhuynh", password: "Abcde@123") {
+    token
+  }
+}
+
+mutation verifyToken {
+	verifyToken(token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InZpbmhodXluaCIsImV4cCI6MTU2MjIzNTEwNywib3JpZ0lhdCI6MTU2MjIzNDUwN30.SrBzWChme3ccUJcfVgQ3APgURo6fyxefDiPA9vlRmqo") {
+    payload
+  }
+}
+
+mutation refreshToken {
+  refreshToken(token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InZpbmhodXluaCIsImV4cCI6MTU2MjIzNTEwNywib3JpZ0lhdCI6MTU2MjIzNDUwN30.SrBzWChme3ccUJcfVgQ3APgURo6fyxefDiPA9vlRmqo"){
+    payload
+  }
+}
