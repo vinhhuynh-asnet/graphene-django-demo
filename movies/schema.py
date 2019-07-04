@@ -242,6 +242,30 @@ class RelayCreateMovie(relay.ClientIDMutation):
         movie_instance.actors.set(actors)
         return RelayCreateMovie(ok=True, movie=movie_instance)
 
+class RelayUpdateMovie(relay.ClientIDMutation):
+    class Input:
+        id = graphene.ID(required=True)
+        title = graphene.String()
+        year = graphene.Int()
+
+    ok = graphene.Boolean()
+    movie = graphene.Field(MovieType)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        id = input.get('id')
+        title = input.get('title')
+        year = input.get('year')
+
+        if not id:
+            return RelayUpdateMovie(ok=False, movie=None)
+
+        movie_instance = Movie.objects.get(pk=id)
+        movie_instance.title = title
+        movie_instance.year = year
+        movie_instance.save()
+        return RelayUpdateMovie(ok=True, movie=movie_instance)
+
 class Mutation(graphene.ObjectType):
     create_actor = CreateActor.Field()
     update_actor = UpdateActor.Field()
@@ -250,7 +274,7 @@ class Mutation(graphene.ObjectType):
     relay_create_actor = RelayCreateActor.Field()
     relay_update_actor = RelayUpdateActor.Field()
     relay_create_movie = RelayCreateMovie.Field()
-    # relay_update_movie = RelayUpdateMovie.Field()
+    relay_update_movie = RelayUpdateMovie.Field()
 
 #########################################################################
 # Define Schema, include in: Query & Mutation
