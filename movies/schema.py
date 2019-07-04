@@ -6,6 +6,7 @@ from graphene import relay
 from graphql_relay import from_global_id
 from graphene_django.types import DjangoObjectType, ObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql_jwt.decorators import login_required
 from movies.models import Actor, Movie
 
 #########################################################################
@@ -47,6 +48,7 @@ class Query(ObjectType):
     actors = DjangoFilterConnectionField(ActorType)
     movies = DjangoFilterConnectionField(MovieType)
 
+    @login_required
     def resolve_me(self, info):
         current_user = info.context.user
         if current_user.is_anonymous:
@@ -54,9 +56,11 @@ class Query(ObjectType):
 
         return current_user
 
+    @login_required
     def resolve_users(self, info):
         return get_user_model().objects.all()
 
+    @login_required
     def resolve_actor(self, info, **kwargs):
         id = kwargs.get('id', None)
 
@@ -64,6 +68,7 @@ class Query(ObjectType):
             return Actor.objects.get(pk=id)
         return None
 
+    @login_required
     def resolve_movie(self, info, **kwargs):
         id = kwargs.get('id', None)
 
@@ -71,9 +76,11 @@ class Query(ObjectType):
             return Movie.objects.get(pk=id)
         return None
 
+    @login_required
     def resolve_actors(self, info, **kwargs):
         return Actor.objects.all()
 
+    @login_required
     def resolve_movies(self, info, **kwargs):
         return Movie.objects.all()
 
@@ -104,6 +111,7 @@ class CreateActor(graphene.Mutation):
     actor = graphene.Field(ActorType)
 
     # Control the execution
+    @login_required
     def mutate(root, info, input=None):
         ok = True
         actor_instance = Actor(name=input.name)
@@ -121,6 +129,7 @@ class UpdateActor(graphene.Mutation):
     actor = graphene.Field(ActorType)
 
     # Control the execution
+    @login_required
     def mutate(root, info, id, input=None):
         ok = False
         actor_instance = Actor.objects.get(pk=id)
@@ -142,6 +151,7 @@ class CreateMovie(graphene.Mutation):
     movie = graphene.Field(MovieType)
 
     # Control the execution
+    @login_required
     def mutate(root, info, input=None):
         ok = True
         actors = []
@@ -169,6 +179,7 @@ class UpdateMovie(graphene.Mutation):
     movie = graphene.Field(MovieType)
 
     # Control the execution
+    @login_required
     def mutate(root, info, id, input=None):
         ok = False
         movie_instance = Movie.objects.get(pk=id)
@@ -224,6 +235,7 @@ class RelayCreateActor(relay.ClientIDMutation):
     actor = graphene.Field(ActorType)
 
     @classmethod
+    @login_required
     def mutate_and_get_payload(cls, root, info, **input):
         print('inputs: ', input)
         name = input.get('name')
@@ -241,6 +253,7 @@ class RelayUpdateActor(relay.ClientIDMutation):
     actor = graphene.Field(ActorType)
 
     @classmethod
+    @login_required
     def mutate_and_get_payload(cls, root, info, **input):
         id = input.get('id', None)
         name = input.get('name', None)
@@ -264,6 +277,7 @@ class RelayCreateMovie(relay.ClientIDMutation):
     movie = graphene.Field(MovieType)
 
     @classmethod
+    @login_required
     def mutate_and_get_payload(cls, root, info, **input):
         title = input.get('title')
         year = input.get('year')
@@ -294,6 +308,7 @@ class RelayUpdateMovie(relay.ClientIDMutation):
     movie = graphene.Field(MovieType)
 
     @classmethod
+    @login_required
     def mutate_and_get_payload(cls, root, info, **input):
         id = input.get('id')
         title = input.get('title')
