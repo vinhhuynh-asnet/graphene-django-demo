@@ -1,4 +1,7 @@
 import graphene
+import graphql_jwt
+
+from django.contrib.auth import get_user_model
 from graphene import relay
 from graphql_relay import from_global_id
 from graphene_django.types import DjangoObjectType, ObjectType
@@ -8,6 +11,10 @@ from movies.models import Actor, Movie
 #########################################################################
 # Create GraphQL Types for the following models
 #########################################################################
+class UserType(DjangoObjectType):
+    class Meta:
+        model = get_user_model()
+
 # Simply, just binding to django model
 class ActorType(DjangoObjectType):
     class Meta:
@@ -28,6 +35,9 @@ class MovieType(DjangoObjectType):
 
 # Next, continue creating the Query Type
 class Query(ObjectType):
+    me = graphene.Field(UserType)
+    users = graphene.List(UserType)
+
     actor = graphene.Field(ActorType, id=graphene.Int())
     movie = graphene.Field(MovieType, id=graphene.Int())
     # actors = graphene.List(ActorType)
@@ -36,6 +46,16 @@ class Query(ObjectType):
     # movie = relay.Node.Field(MovieType)
     actors = DjangoFilterConnectionField(ActorType)
     movies = DjangoFilterConnectionField(MovieType)
+
+    def resolve_me(self, info):
+        current_user = info.context.user
+        if current_user.is_anonymous:
+            raise Exception('Authentication failed!')
+
+        return current_user
+
+    def resolve_users(self, info):
+        return get_user_model().objects.all()
 
     def resolve_actor(self, info, **kwargs):
         id = kwargs.get('id', None)
@@ -170,6 +190,28 @@ class UpdateMovie(graphene.Mutation):
             return UpdateMovie(ok=ok, movie=movie_instance)
         return UpdateMovie(ok=ok, movie=None)
 
+class RegisterUser(graphene.Mutation):
+    # Payload
+    user = graphene.Field(UserType)
+
+    class Arguments:
+        username = graphene.String(required=True)
+        password = graphene.String(required=True)
+        email = graphene.String(required=True)
+
+    def mutate(self, info, username, password, email):
+        # Check if user existed
+        User = get_user_model()
+        if User.objects.filter(username=username):
+            raise Exception('User existed!')
+
+        user_instance = get_user_model()(
+            username=username,
+            email=email,
+        )
+        user_instance.set_password(password)
+        user_instance.save()
+        return RegisterUser(user=user_instance)
 
 #########################################################################
 # Define the Relay Mutations
@@ -267,6 +309,12 @@ class RelayUpdateMovie(relay.ClientIDMutation):
         return RelayUpdateMovie(ok=True, movie=movie_instance)
 
 class Mutation(graphene.ObjectType):
+    # Authentication
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
+    refresh_token = graphql_jwt.Refresh.Field()
+
+    # Mutate operations
     create_actor = CreateActor.Field()
     update_actor = UpdateActor.Field()
     create_movie = CreateMovie.Field()
@@ -275,6 +323,7 @@ class Mutation(graphene.ObjectType):
     relay_update_actor = RelayUpdateActor.Field()
     relay_create_movie = RelayCreateMovie.Field()
     relay_update_movie = RelayUpdateMovie.Field()
+    register_user = RegisterUser.Field()
 
 #########################################################################
 # Define Schema, include in: Query & Mutation
