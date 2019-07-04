@@ -86,3 +86,73 @@ mutation updateMovie {
     }
   }
 }
+
+mutation relayCreateActor {
+  relayCreateActor(input: {
+    name: "test"
+  }) {
+    ok
+    actor {
+      id
+      name
+    }
+  }
+}
+
+mutation relayUpdateActor {
+  relayUpdateActor(input: {
+    id: 11,
+    name: "TestABC"
+  }) {
+    ok
+    actor {
+      id
+      name
+    }
+  }
+}
+
+mutation relayCreateMovie {
+  relayCreateMovie(input: {
+    title: "testA"
+    year: 2000
+    actors: [
+      {
+        id: 3
+      },
+      {
+        id: 11
+      }
+    ]
+  }) {
+    ok
+    movie {
+      id
+      title
+      year
+      actors {
+        edges {
+          node {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation relayUpdateMovie {
+  relayUpdateMovie(input: {
+    id: 1
+    title: "test update title"
+    year: 2012
+  }) {
+    ok
+    movie {
+      id
+      title
+      year
+    }
+  }
+}
