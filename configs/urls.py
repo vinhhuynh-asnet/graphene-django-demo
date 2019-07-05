@@ -20,7 +20,9 @@ from django.views.decorators.csrf import csrf_exempt
 # Graphene
 from graphene_django.views import GraphQLView
 from graphql_jwt.decorators import jwt_cookie
-from configs.schema import schema
+# from configs.schema import schema
+from movies.schema import schema
+# from movies.schema_sa import schema
 
 urlpatterns = [
     path('admin/', admin.site.urls),

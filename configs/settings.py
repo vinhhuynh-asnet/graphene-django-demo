@@ -132,6 +132,7 @@ STATIC_URL = '/static/'
 # Graphene settings
 GRAPHENE = {
     'SCHEMA': 'configs.schema.schema',
+    # 'SCHEMA': 'movies.schema_sa.schema',
     'MIDDLEWARE': [
         'graphql_jwt.middleware.JSONWebTokenMiddleware',
     ],
